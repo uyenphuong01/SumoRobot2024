@@ -1,0 +1,65 @@
+#include <PID_v1.h>
+
+// Khai báo các chân điều khiển động cơ
+const int motorAPin1 = 2; // Chân điều khiển động cơ A, một trong các chân IN của driver động cơ
+const int motorAPin2 = 3; // Chân điều khiển động cơ A, một trong các chân IN của driver động cơ
+const int motorBPin1 = 4; // Chân điều khiển động cơ B, một trong các chân IN của driver động cơ
+const int motorBPin2 = 5; // Chân điều khiển động cơ B, một trong các chân IN của driver động cơ
+
+// Khai báo các biến PID
+double Setpoint, Input, Output;
+double Kp = 1, Ki = 0.1, Kd = 0.1; // Tham số của PID
+PID pid(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+
+void setup() {
+  // Khởi tạo các chân điều khiển động cơ
+  pinMode(motorAPin1, OUTPUT);
+  pinMode(motorAPin2, OUTPUT);
+  pinMode(motorBPin1, OUTPUT);
+  pinMode(motorBPin2, OUTPUT);
+
+  // Khởi tạo PID
+  pid.SetMode(AUTOMATIC);
+  pid.SetSampleTime(10); // Thời gian lấy mẫu (ms)
+  
+  // Khởi tạo tốc độ mục tiêu ban đầu
+  Setpoint = 0; // Tốc độ mong muốn khi xe đi thẳng
+}
+
+void loop() {
+  // Đọc tốc độ thực tế của hai bánh xe
+  int speedA = analogRead(A0); // Thay A0 bằng chân analog mà bạn sử dụng để đọc tốc độ của bánh xe A
+  int speedB = analogRead(A1); // Thay A1 bằng chân analog mà bạn sử dụng để đọc tốc độ của bánh xe B
+
+  // Tính tốc độ trung bình của hai bánh xe
+  Input = (speedA + speedB) / 2;
+
+  // Tính toán đầu ra của PID
+  pid.Compute();
+
+  // Điều chỉnh tốc độ của hai bánh xe
+  adjustMotorSpeed(Output);
+
+  // Delay để chờ thời gian lấy mẫu tiếp theo
+  delay(10);
+}
+
+void adjustMotorSpeed(double output) {
+  // Điều chỉnh tốc độ của động cơ A
+  if (output > 0) {
+    analogWrite(motorAPin1, output);
+    analogWrite(motorAPin2, 0);
+  } else {
+    analogWrite(motorAPin1, 0);
+    analogWrite(motorAPin2, -output);
+  }
+
+  // Điều chỉnh tốc độ của động cơ B
+  if (output > 0) {
+    analogWrite(motorBPin1, output);
+    analogWrite(motorBPin2, 0);
+  } else {
+    analogWrite(motorBPin1, 0);
+    analogWrite(motorBPin2, -output);
+  }
+}
